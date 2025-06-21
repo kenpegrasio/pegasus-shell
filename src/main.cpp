@@ -98,6 +98,17 @@ int main() {
       continue;
     }
 
+    if (args[0] == "cd") {
+      auto target_path = std::filesystem::current_path() / args[1];
+      if (std::filesystem::exists(target_path)) {
+        std::filesystem::current_path(target_path);
+        continue;
+      } else {
+        std::cout << "cd: " << args[1] << ": No such file or directory" << std::endl;
+      }
+      continue;
+    }
+
     if (std::string executables_path = find_executables(paths, args[0]); executables_path != "") {
       system(input.c_str());
       continue;
