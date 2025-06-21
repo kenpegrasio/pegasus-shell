@@ -5,11 +5,17 @@
 #include <vector>
 #include <filesystem>
 
-std::vector<std::string> split_inputs(std::string input, char delimiter) {
+std::vector<std::string> split_inputs(std::string input) {
   std::string cur = "";
   std::vector <std::string> v;
+  bool inside_single_quote = false;
   for (int i = 0; i < (int) input.size(); i++) {
-    if (input[i] == delimiter) {
+    if (input[i] == '\'') {
+      inside_single_quote = !inside_single_quote;
+      continue;
+    }
+    if (!inside_single_quote && input[i] == ' ') {
+      if (cur == "") continue;
       v.push_back(cur);
       cur = "";
     } else {
@@ -85,7 +91,7 @@ int main() {
 
     std::string input;
     std::getline(std::cin, input);
-    std::vector<std::string> args = split_inputs(input, ' ');
+    std::vector<std::string> args = split_inputs(input);
 
     if (args[0] == "exit") {
       return 0;
@@ -104,7 +110,11 @@ int main() {
     } 
     
     if (args[0] == "echo") {
-      std::cout << input.substr(5, (int) input.size() - 4) << std::endl;
+      for (int i = 1; i < (int) args.size(); i++) {
+        std::cout << args[i];
+        if (i == (int) args.size() - 1) std::cout << std::endl;
+        else std::cout << " ";
+      }
       continue;
     }
 
