@@ -5,11 +5,26 @@
 #include <vector>
 #include <filesystem>
 
-std::vector<std::string> find_path(const char*& path) {
+std::vector<std::string> split_inputs(std::string input, char delimiter) {
+  std::string cur = "";
+  std::vector <std::string> v;
+  for (int i = 0; i < (int) input.size(); i++) {
+    if (input[i] == delimiter) {
+      v.push_back(cur);
+      cur = "";
+    } else {
+      cur += input[i];
+    }
+  }
+  v.push_back(cur);
+  return v;
+}
+
+std::vector<std::string> split_paths(const char*& path, char delimiter) {
   std::string cur = "";
   std::vector <std::string> v;
   for (int i = 0; i < strlen(path); i++) {
-    if (path[i] == ':') {
+    if (path[i] == delimiter) {
       v.push_back(cur);
       cur = "";
     } else {
@@ -48,20 +63,21 @@ int main() {
     return 1;
   }
 
-  std::vector<std::string> paths = find_path(path);
+  std::vector<std::string> paths = split_paths(path, ':');
 
   while (true) {
     std::cout << "$ ";
 
     std::string input;
     std::getline(std::cin, input);
+    std::vector<std::string> args = split_inputs(input, ' ');
 
-    if (input == "exit 0") {
+    if (args[0] == "exit") {
       return 0;
     } 
     
-    if (input.substr(0, 4) == "type") {
-      std::string command = input.substr(5, (int) input.size() - 4);
+    if (args[0] == "type") {
+      std::string command = args[1];
       if (command == "exit" || command == "type" || command == "echo") {
         std::cout << command << " is a shell builtin" << std::endl;
       } else if (std::string executables_path = find_executables(paths, command); executables_path != "") {
@@ -69,12 +85,19 @@ int main() {
       } else {
         std::cout << command << ": not found" << std::endl;
       }
+      continue;
     } 
-    else if (input.substr(0, 4) == "echo") {
+    
+    if (args[1] == "echo") {
       std::cout << input.substr(5, (int) input.size() - 4) << std::endl;
+      continue;
     }
-    else {
-      std::cout << input << ": command not found" << std::endl;
+
+    if (std::string executables_path = find_executables(paths, args[0]); executables_path != "") {
+      system(input.c_str());
+      continue;
     }
+    
+    std::cout << input << ": command not found" << std::endl;
   }
 }
