@@ -27,7 +27,7 @@ std::vector<std::string> split_inputs(std::string input) {
       continue;
     }
 
-    if (!inside_double_quote && !inside_single_quote && input[i] == '\\') {
+    if (!inside_single_quote && input[i] == '\\') {
       backslash = true;
       continue;
     }
