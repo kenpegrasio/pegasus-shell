@@ -9,12 +9,18 @@ std::vector<std::string> split_inputs(std::string input) {
   std::string cur = "";
   std::vector <std::string> v;
   bool inside_single_quote = false;
+  bool inside_double_quote = false;
   for (int i = 0; i < (int) input.size(); i++) {
-    if (input[i] == '\'') {
+    if (input[i] == '\"') {
+      inside_double_quote = !inside_double_quote;
+      continue;
+    }
+    
+    if (!inside_double_quote && input[i] == '\'') {
       inside_single_quote = !inside_single_quote;
       continue;
     }
-    if (!inside_single_quote && input[i] == ' ') {
+    if (!inside_double_quote && !inside_single_quote && input[i] == ' ') {
       if (cur == "") continue;
       v.push_back(cur);
       cur = "";
