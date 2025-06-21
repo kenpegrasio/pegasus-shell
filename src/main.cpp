@@ -35,6 +35,21 @@ std::vector<std::string> split_paths(const char*& path, char delimiter) {
   return v;
 }
 
+std::vector<std::string> split_folders(std::string path, char delimiter) {
+  std::string cur = "";
+  std::vector <std::string> v;
+  for (int i = 0; i < (int) path.size(); i++) {
+    if (path[i] == delimiter) {
+      v.push_back(cur);
+      cur = "";
+    } else {
+      cur += path[i];
+    }
+  }
+  v.push_back(cur);
+  return v;
+}
+
 std::string find_executables(std::vector<std::string>& paths, std::string& command) {
   for (auto path : paths) {
     std::string full_path = path + "/" + command;
@@ -99,13 +114,32 @@ int main() {
     }
 
     if (args[0] == "cd") {
-      auto target_path = std::filesystem::current_path() / args[1];
+      // Case 1: Absolute Paths
+      if (args[1][0] == '/') {
+        if (std::filesystem::exists(args[1])) {
+          std::filesystem::current_path(args[1]);
+        } else {
+          std::cout << "cd: " << args[1] << ": No such file or directory" << std::endl;
+        }
+        continue;
+      }
+
+      // Case 2: Relative Paths
+      auto folders = split_folders(args[1], '/');
+      auto target_path = std::filesystem::current_path();
+      
+      for (auto folder : folders) {
+        if (folder == ".") continue;
+        if (folder == "..") target_path = target_path.parent_path();
+        else target_path = target_path / folder;
+      }
       if (std::filesystem::exists(target_path)) {
         std::filesystem::current_path(target_path);
         continue;
       } else {
         std::cout << "cd: " << args[1] << ": No such file or directory" << std::endl;
       }
+
       continue;
     }
 
