@@ -6,19 +6,30 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  // Uncomment this block to pass the first stage
   while (true) {
     std::cout << "$ ";
 
     std::string input;
     std::getline(std::cin, input);
+
     if (input == "exit 0") {
       return 0;
-    }
-    if (input.substr(0, 4) == "echo") {
+    } 
+    
+    if (input.substr(0, 4) == "type") {
+      std::string command = input.substr(5, (int) input.size() - 4);
+      if (command == "exit" || command == "type" || command == "echo") {
+        std::cout << command << " is a shell builtin" << std::endl;
+      } 
+      else {
+        std::cout << command << ": not found" << std::endl;
+      }
+    } 
+    else if (input.substr(0, 4) == "echo") {
       std::cout << input.substr(5, (int) input.size() - 4) << std::endl;
-      continue;
+    } 
+    else {
+      std::cout << input << ": command not found" << std::endl;
     }
-    std::cout << input << ": command not found" << std::endl;
   }
 }
