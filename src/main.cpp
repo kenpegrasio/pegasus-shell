@@ -124,6 +124,13 @@ int main() {
         continue;
       }
 
+      // Case 3: Home directory
+      if (args[1][0] == '~') {
+        const char* home_dir = std::getenv("HOME");
+        std::filesystem::current_path(home_dir);
+        continue;
+      }
+
       // Case 2: Relative Paths
       auto folders = split_folders(args[1], '/');
       auto target_path = std::filesystem::current_path();
