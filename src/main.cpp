@@ -88,7 +88,7 @@ int main() {
       continue;
     } 
     
-    if (args[1] == "echo") {
+    if (args[0] == "echo") {
       std::cout << input.substr(5, (int) input.size() - 4) << std::endl;
       continue;
     }
