@@ -15,6 +15,10 @@ int main() {
     if (input == "exit 0") {
       return 0;
     }
+    if (input.substr(0, 4) == "echo") {
+      std::cout << input.substr(5, (int) input.size() - 4) << std::endl;
+      continue;
+    }
     std::cout << input << ": command not found" << std::endl;
   }
 }
