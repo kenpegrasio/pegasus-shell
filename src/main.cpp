@@ -10,14 +10,7 @@ std::vector<std::string> split_inputs(std::string input) {
   std::vector <std::string> v;
   bool inside_single_quote = false;
   bool inside_double_quote = false;
-  bool backslash = false;
   for (int i = 0; i < (int) input.size(); i++) {
-    if (backslash) {
-      cur += input[i];
-      backslash = false;
-      continue;
-    }
-
     if (!inside_single_quote && input[i] == '\"') {
       inside_double_quote = !inside_double_quote;
       continue;
@@ -26,9 +19,46 @@ std::vector<std::string> split_inputs(std::string input) {
       inside_single_quote = !inside_single_quote;
       continue;
     }
+    if (input[i] == '\\') {
+      if (inside_single_quote) {
+        /*
+          Enclosing characters in single quotes (‘'’) preserves the literal value of each character within the quotes. 
+          A single quote may not occur between single quotes, even when preceded by a backslash.
+          Source: https://www.gnu.org/software/bash/manual/bash.html#Single-Quotes
+        */
+        cur += input[i];
+      } else if (inside_double_quote) {
+        /*
+          The backslash retains its special meaning only when followed by one of the following characters: ‘$’, ‘`’, ‘"’, ‘\’, or newline. 
+          Within double quotes, backslashes that are followed by one of these characters are removed. 
+          Backslashes preceding characters without a special meaning are left unmodified.
+          Source: https://www.gnu.org/software/bash/manual/bash.html#Double-Quotes 
+          Note: In C++ '\n' is treated as a single character
+        */
+        bool isSpecialCharacter = (
+          input[i + 1] == '\n' || input[i + 1] == '$' || 
+          input[i + 1] == '\"' || input[i + 1] == '`'  || 
+          input[i + 1] == '\\'
+        );
 
-    if (!inside_single_quote && input[i] == '\\') {
-      backslash = true;
+        if (i + 1 < input.length() && isSpecialCharacter) {
+          cur += input[i + 1];
+          i++;
+        } else {
+          cur += input[i];
+        }
+      } else {
+        /*
+          A non-quoted backslash ‘\’ is the Bash escape character. It preserves the literal value of the next character that follows. 
+          Source: https://www.gnu.org/software/bash/manual/bash.html#Escape-Character 
+        */
+        if (i + 1 < input.length()) {
+          cur += input[i + 1];
+          i++;
+        } else {
+          throw std::invalid_argument("\\ must be followed by a character");
+        }
+      }
       continue;
     }
 
@@ -79,6 +109,31 @@ std::string find_executables(std::vector<std::string>& paths, std::string& comma
     std::string full_path = path + "/" + command;
     try {
       for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        /*
+          When working with files, quotes are only needed in shell. Quotes are not used other than that, i.e., in file system. 
+          This is because input in the shell are seperated by space, so we need a way to escape a space when necessary, which by 
+          using quoting. 
+
+          According to the C++ documentation (https://en.cppreference.com/w/cpp/filesystem/path.html), the return value for 
+          the path class below, entry.path(), is a string. It will convert the file path into a string. 
+          For example, you have a file at the location ./Documents/Hello World.exe, then it will return to you 
+          "./Documents/Hello World.exe", without any quoting like the one in the shell. 
+
+          The "command" variable that you pass to this function is the parsed (by the split_inputs function) version of 
+          the input from the shell. It is already a normal path that our file system used to store things. Therefore, it is 
+          unnecessary to put extra quoting to "command" since they are already aligned. 
+
+          -------------------------
+          From shell to file system
+          -------------------------
+          Quoted inputs (./"Hello' World.exe")
+            -> go through split_inputs function
+            -> Normal path (./Hello' World.exe) 
+          This normal path is what our operating system used, and what C++ .path() class offer. Therefore, we can compare them. 
+
+          The same thing applies when we want to send back command to the shell. We need to parse it such that spaces that are 
+          treated as a character (not for splitting arguments) indeed treated as a character. We need to quote them when necessary. 
+        */
         if (entry.path() == full_path) {
           return full_path;
         }
