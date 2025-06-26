@@ -59,5 +59,6 @@
         "optional": "cpp",
         "ratio": "cpp",
         "sstream": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

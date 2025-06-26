@@ -4,6 +4,8 @@
 #include <cstring>
 #include <vector>
 #include <filesystem>
+#include <termios.h>
+#include <unistd.h>
 
 std::vector<std::string> split_inputs(std::string input) {
   std::string cur = "";
@@ -145,7 +147,43 @@ std::string find_executables(std::vector<std::string>& paths, std::string& comma
   return "";
 }
 
+/*
+  The code below for enabling the raw mode is referenced from 
+  https://viewsourcecode.org/snaptoken/kilo/02.enteringRawMode.html 
+  I only did until Step 8 because the others are irrelevant for this project. 
+*/
+
+struct termios orig_termios;
+
+void disableRawMode() {
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
+void enableRawMode() {
+  tcgetattr(STDIN_FILENO, &orig_termios);
+  atexit(disableRawMode);
+  struct termios raw = orig_termios;
+  raw.c_lflag &= ~(ECHO | ICANON);
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
 int main() {
+/*
+  // This code is from Step 8 in https://viewsourcecode.org/snaptoken/kilo/02.enteringRawMode.html, used for testing only
+  enableRawMode();
+  char c;
+  while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+    if (iscntrl(c)) {
+      printf("%d\n", c);
+    } else {
+      printf("%d ('%c')\n", c, c);
+    }
+  }
+  return 0;
+*/
+  
+  enableRawMode();
+
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -162,8 +200,55 @@ int main() {
   while (true) {
     std::cout << "$ ";
 
-    std::string input;
-    std::getline(std::cin, input);
+    std::string input = "";
+
+    // Read character by character
+    while (true) {
+      char c;
+      read(STDIN_FILENO, &c, 1);
+      if (c == '\n') {
+        std::cout << std::endl;
+        break;
+      } else if (c == 127) { // handling backspace, 127 refers to DEL
+        if (input.empty()) continue;
+        input.pop_back();
+        std::cout << "\b \b";
+        /*
+          \b	Backspace: moves the cursor one character to the left
+          ' '	Space: overwrites the character at the cursor with a space
+          \b	Backspace again: moves the cursor back one more step to the left, so the cursor is in the correct position
+        */
+      } else if (c == '\t') {
+        // Autocompletion should trigger here
+        // std::cout << "Tab is triggered" << std::endl;
+        std::vector<std::string> builtins = {"exit", "type", "echo", "pwd"};
+        if (input.find(' ') != std::string::npos) continue;
+        int cnt = 0;
+        std::string matched = "";
+        for (const auto& builtin : builtins) {
+          if (builtin.find(input) == 0) {
+            cnt++;
+            matched = builtin;
+          }
+        }
+        if (cnt != 1) {
+          // std::cout << "Match for 0 or more than 1 builtins, do not do anything" << std::endl;
+          continue;
+        }
+        auto idx = matched.find(input) + input.size();
+        while (idx < (int) matched.size()) {
+          std::cout << matched[idx];
+          input += matched[idx];
+          idx++;
+        }
+        std::cout << " ";
+        input += " ";
+      } else {
+        std::cout << c;
+        input += c;
+      }
+    }
+
     std::vector<std::string> args = split_inputs(input);
 
     if (args[0] == "exit") {
