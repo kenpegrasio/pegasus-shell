@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <termios.h>
 #include <unistd.h>
+#include <set>
 
 std::vector<std::string> split_inputs(std::string input) {
   std::string cur = "";
@@ -104,6 +105,18 @@ std::vector<std::string> split_folders(std::string path, char delimiter) {
   }
   v.push_back(cur);
   return v;
+}
+
+std::set<std::string> generate_executables(std::vector<std::string>& paths) {
+  std::set<std::string> res;
+  for (const auto& path : paths) {
+    try {
+      for (const auto& entry: std::filesystem::directory_iterator(path)) {
+        res.insert(entry.path().filename().string());
+      }
+    } catch (const std::filesystem::filesystem_error& e) {}
+  }
+  return res;
 }
 
 std::string find_executables(std::vector<std::string>& paths, std::string& command) {
@@ -221,14 +234,17 @@ int main() {
       } else if (c == '\t') {
         // Autocompletion should trigger here
         // std::cout << "Tab is triggered" << std::endl;
-        std::vector<std::string> builtins = {"exit", "type", "echo", "pwd"};
+        std::set<std::string> all_commands = generate_executables(paths);
+        for (const auto& builtin : {"exit", "type", "echo", "pwd"}) {
+          all_commands.insert(builtin);
+        }
         if (input.find(' ') != std::string::npos) continue;
         int cnt = 0;
         std::string matched = "";
-        for (const auto& builtin : builtins) {
-          if (builtin.find(input) == 0) {
+        for (const auto& command : all_commands) {
+          if (command.find(input) == 0) {
             cnt++;
-            matched = builtin;
+            matched = command;
           }
         }
         if (cnt != 1) {
