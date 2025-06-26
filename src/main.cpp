@@ -233,6 +233,7 @@ int main() {
         }
         if (cnt != 1) {
           // std::cout << "Match for 0 or more than 1 builtins, do not do anything" << std::endl;
+          std::cout << '\x07';
           continue;
         }
         auto idx = matched.find(input) + input.size();
