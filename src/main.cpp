@@ -324,7 +324,7 @@ int main() {
     
     if (args[0] == "type") {
       std::string command = args[1];
-      if (command == "exit" || command == "type" || command == "echo" || command == "pwd") {
+      if (command == "exit" || command == "type" || command == "echo" || command == "pwd" || command == "history") {
         std::cout << command << " is a shell builtin" << std::endl;
       } else if (std::string executables_path = find_executables(paths, command); executables_path != "") {
         std::cout << command << " is " << executables_path << std::endl;
