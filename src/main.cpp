@@ -390,6 +390,13 @@ int main() {
     }
 
     if (args[0] == "history") {
+      if (args.size() > 1) {
+        int num = std::stoi(args[1]);
+        for (int i = (int) hist.size() - num; i < (int) hist.size(); i++) {
+          std::cout << "    " << i + 1 << "  " << hist[i] << std::endl;
+        }
+        continue;
+      }
       for (int i = 0; i < (int) hist.size(); i++) {
         std::cout << "    " << i + 1 << "  " << hist[i] << std::endl;
       }
