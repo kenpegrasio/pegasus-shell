@@ -122,9 +122,12 @@ std::set<std::string> generate_executables(std::vector<std::string>& paths) {
 std::string find_executables(std::vector<std::string>& paths, std::string& command) {
   for (auto path : paths) {
     std::string full_path = path + "/" + command;
+    if (access(full_path.c_str(), X_OK) == 0) {
+      return full_path;
+    }
+    /*
     try {
       for (const auto& entry : std::filesystem::directory_iterator(path)) {
-        /*
           When working with files, quotes are only needed in shell. Quotes are not used other than that, i.e., in file system. 
           This is because input in the shell are seperated by space, so we need a way to escape a space when necessary, which by 
           using quoting. 
@@ -147,8 +150,8 @@ std::string find_executables(std::vector<std::string>& paths, std::string& comma
           This normal path is what our operating system used, and what C++ .path() class offer. Therefore, we can compare them. 
 
           The same thing applies when we want to send back command to the shell. We need to parse it such that spaces that are 
-          treated as a character (not for splitting arguments) indeed treated as a character. We need to quote them when necessary. 
-        */
+          treated as a character (not for splitting arguments) indeed treated as a character. We need to quote them when necessary.
+        
         if (entry.path() == full_path) {
           return full_path;
         }
@@ -156,6 +159,7 @@ std::string find_executables(std::vector<std::string>& paths, std::string& comma
     } catch (const std::filesystem::filesystem_error& e) {
       std::cerr << "Error: " << e.what() << std::endl;
     }
+    */
   }
   return "";
 }
