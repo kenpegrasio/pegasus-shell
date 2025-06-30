@@ -325,6 +325,12 @@ int main() {
           std::cout << hist[hist_idx];
           input = hist[hist_idx];
         } else if (seq[0] == '[' && seq[1] == 'B') { // down arrow handler
+          input = "";
+          if (hist_idx + 1 < (int) hist.size()) hist_idx++;
+          std::cout << "\33[2K\r";
+          std::cout << "$ ";
+          std::cout << hist[hist_idx];
+          input = hist[hist_idx];
         }
       } else {
         std::cout << c;
