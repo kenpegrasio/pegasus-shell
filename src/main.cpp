@@ -261,6 +261,30 @@ int main() {
           continue;
         }
         if (cnt > 1) {
+          int idx = input.size();
+          bool exist_similar_prefix = false;
+          while (true) {
+            bool same_char = true;
+            for (int i = 1; i < (int) matched.size(); i++) {
+              if (idx >= matched[i].length()) {
+                same_char = false;
+                break;
+              }
+              if (matched[i][idx] != matched[i - 1][idx]) {
+                same_char = false;
+                break;
+              }
+            }
+            if (same_char) {
+              std::cout << matched[0][idx];
+              input += matched[0][idx];
+              exist_similar_prefix = true;
+              idx++;
+            } else {
+              break;
+            }
+          }
+          if (exist_similar_prefix) continue;
           if (!multiple_match_flag) {
             multiple_match_flag = true;
             std::cout << '\x07';
