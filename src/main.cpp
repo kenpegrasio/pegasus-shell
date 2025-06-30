@@ -220,9 +220,14 @@ int main() {
     std::string input = "";
 
     // Read character by character
+    bool multiple_match_flag = false;
     while (true) {
       char c;
       read(STDIN_FILENO, &c, 1);
+      if (c != '\t') {
+        multiple_match_flag = false;
+      }
+
       if (c == '\n') {
         std::cout << std::endl;
         break;
@@ -244,22 +249,39 @@ int main() {
         }
         if (input.find(' ') != std::string::npos) continue;
         int cnt = 0;
-        std::string matched = "";
+        std::vector<std::string> matched;
         for (const auto& command : all_commands) {
           if (command.find(input) == 0) {
             cnt++;
-            matched = command;
+            matched.push_back(command);
           }
         }
-        if (cnt != 1) {
-          // std::cout << "Match for 0 or more than 1 builtins, do not do anything" << std::endl;
+        if (cnt == 0) {
           std::cout << '\x07';
           continue;
         }
-        auto idx = matched.find(input) + input.size();
-        while (idx < (int) matched.size()) {
-          std::cout << matched[idx];
-          input += matched[idx];
+        if (cnt > 1) {
+          if (!multiple_match_flag) {
+            multiple_match_flag = true;
+            std::cout << '\x07';
+          } else {
+            std::cout << std::endl;
+            for (int i = 0; i < (int) matched.size(); i++) {
+              if (i == (int) matched.size() - 1) {
+                std::cout << matched[i] << std::endl;
+              } else {
+                std::cout << matched[i] << "  ";
+              }
+            }
+            multiple_match_flag = false;
+            std::cout << "$ " << input;
+          }
+          continue;
+        }
+        auto idx = matched[0].find(input) + input.size();
+        while (idx < (int) matched[0].size()) {
+          std::cout << matched[0][idx];
+          input += matched[0][idx];
           idx++;
         }
         std::cout << " ";
