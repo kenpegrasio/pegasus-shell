@@ -214,6 +214,8 @@ int main() {
 
   std::vector<std::string> paths = split_paths(path, ':');
 
+  std::vector<std::string> hist;
+
   while (true) {
     std::cout << "$ ";
 
@@ -315,6 +317,8 @@ int main() {
         input += c;
       }
     }
+    
+    hist.push_back(input);
 
     std::vector<std::string> args = split_inputs(input);
 
@@ -382,6 +386,13 @@ int main() {
         std::cout << "cd: " << args[1] << ": No such file or directory" << std::endl;
       }
 
+      continue;
+    }
+
+    if (args[0] == "history") {
+      for (int i = 0; i < (int) hist.size(); i++) {
+        std::cout << "    " << i + 1 << "  " << hist[i] << std::endl;
+      }
       continue;
     }
 
