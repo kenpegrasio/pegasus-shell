@@ -215,6 +215,7 @@ int main() {
   std::vector<std::string> paths = split_paths(path, ':');
 
   std::vector<std::string> hist;
+  int hist_idx = 0;
 
   while (true) {
     std::cout << "$ ";
@@ -312,6 +313,19 @@ int main() {
         }
         std::cout << " ";
         input += " ";
+      } else if (c == '\x1B') {
+        char seq[2];
+        if (read(STDIN_FILENO, &seq[0], 1) == 0) continue;
+        if (read(STDIN_FILENO, &seq[1], 1) == 0) continue;
+        if (seq[0] == '[' && seq[1] == 'A') { // up arrow handler
+          input = "";
+          if (hist_idx > 0) hist_idx--;
+          std::cout << "\33[2K\r";
+          std::cout << "$ ";
+          std::cout << hist[hist_idx];
+          input = hist[hist_idx];
+        } else if (seq[0] == '[' && seq[1] == 'B') { // down arrow handler
+        }
       } else {
         std::cout << c;
         input += c;
@@ -319,6 +333,7 @@ int main() {
     }
     
     hist.push_back(input);
+    hist_idx++;
 
     std::vector<std::string> args = split_inputs(input);
 
