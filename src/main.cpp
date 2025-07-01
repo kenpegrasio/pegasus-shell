@@ -360,7 +360,7 @@ int main() {
     std::vector<std::string> args = split_inputs(input);
 
     if (args[0] == "exit") {
-      return 0;
+      break;
     } 
     
     if (args[0] == "type") {
@@ -472,5 +472,13 @@ int main() {
     }
     
     std::cout << input << ": command not found" << std::endl;
+  }
+
+  if (hist_path) {
+    std::ofstream outFile(hist_path);
+    for (auto history_entry : hist) {
+      outFile << history_entry << std::endl;
+    }
+    outFile.close();
   }
 }
