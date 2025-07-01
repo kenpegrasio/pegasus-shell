@@ -424,6 +424,12 @@ int main() {
             hist.push_back(line);
           }
           inputFile.close();
+        } else if (args[1] == "-w") {
+          std::ofstream outFile(args[2]);
+          for (auto history_entry : hist) {
+            outFile << history_entry << std::endl;
+          }
+          outFile.close();
         } else {
           int num = std::stoi(args[1]);
           for (int i = (int) hist.size() - num; i < (int) hist.size(); i++) {
