@@ -6,6 +6,7 @@
 void process_echo(std::vector<std::string>& args) {
   int redirect_idx = args.size();
   bool isError = false;
+  bool isAppend = false;
   for (int i = 0; i < (int)args.size(); i++) {
     if (args[i] == ">" || args[i] == "1>") {
       redirect_idx = i;
@@ -14,6 +15,11 @@ void process_echo(std::vector<std::string>& args) {
     if (args[i] == "2>") {
       redirect_idx = i;
       isError = true;
+      break;
+    }
+    if (args[i] == "1>>") {
+      redirect_idx = i;
+      isAppend = true;
       break;
     }
   }
@@ -36,6 +42,13 @@ void process_echo(std::vector<std::string>& args) {
     std::ofstream outputFile(args[redirect_idx + 1]);
     std::cout << res;
     outputFile << "";
+  } else if (isAppend) {
+    if (redirect_idx + 1 >= args.size()) {
+      std::cerr << "No argument for redirect found" << std::endl;
+      return;
+    }
+    std::ofstream outputFile(args[redirect_idx + 1], std::ios::app);
+    outputFile << res;
   } else {
     if (redirect_idx + 1 >= args.size()) {
       std::cerr << "No argument for redirect found" << std::endl;
