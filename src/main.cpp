@@ -430,6 +430,13 @@ int main() {
             outFile << history_entry << std::endl;
           }
           outFile.close();
+        } else if (args[1] == "-a") {
+          std::ofstream outFile(args[2], std::ios::app);
+          for (auto history_entry : hist) {
+            outFile << history_entry << std::endl;
+          }
+          hist.clear();
+          outFile.close();
         } else {
           int num = std::stoi(args[1]);
           for (int i = (int) hist.size() - num; i < (int) hist.size(); i++) {
