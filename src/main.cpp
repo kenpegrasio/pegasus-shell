@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <set>
+#include <fstream>
 
 std::vector<std::string> split_inputs(std::string input) {
   std::string cur = "";
@@ -412,9 +413,22 @@ int main() {
 
     if (args[0] == "history") {
       if (args.size() > 1) {
-        int num = std::stoi(args[1]);
-        for (int i = (int) hist.size() - num; i < (int) hist.size(); i++) {
-          std::cout << "    " << i + 1 << "  " << hist[i] << std::endl;
+        if (args[1] == "-r") {
+          std::ifstream inputFile(args[2]);
+          if (!inputFile.is_open()) {
+            std::cerr << "Error opening the input file" << std::endl;
+            continue;
+          }
+          std::string line;
+          while (std::getline(inputFile, line)) {
+            hist.push_back(line);
+          }
+          inputFile.close();
+        } else {
+          int num = std::stoi(args[1]);
+          for (int i = (int) hist.size() - num; i < (int) hist.size(); i++) {
+            std::cout << "    " << i + 1 << "  " << hist[i] << std::endl;
+          }
         }
         continue;
       }
