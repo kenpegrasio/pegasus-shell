@@ -217,6 +217,21 @@ int main() {
 
   std::vector<std::string> hist;
   int hist_idx = 0;
+  
+  const char* hist_path = std::getenv("HISTFILE");
+  
+  if (hist_path) {
+    std::ifstream inputFile(hist_path);
+    if (!inputFile.is_open()) {
+      std::cerr << "Error opening HISTFILE" << std::endl;
+      return 1;
+    }
+    std::string line;
+    while (std::getline(inputFile, line)) {
+      hist.push_back(line);
+    }
+    inputFile.close();
+  }
 
   while (true) {
     std::cout << "$ ";
