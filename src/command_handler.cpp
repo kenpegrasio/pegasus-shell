@@ -5,9 +5,15 @@
 
 void process_echo(std::vector<std::string>& args) {
   int redirect_idx = args.size();
+  bool isError = false;
   for (int i = 0; i < (int)args.size(); i++) {
-    if (args[i].find('>') != std::string::npos) {
+    if (args[i] == ">" || args[i] == "1>") {
       redirect_idx = i;
+      break;
+    }
+    if (args[i] == "2>") {
+      redirect_idx = i;
+      isError = true;
       break;
     }
   }
@@ -19,9 +25,18 @@ void process_echo(std::vector<std::string>& args) {
     else
       res += " ";
   }
+
   if (redirect_idx == (int)args.size())
     std::cout << res;
-  else {
+  else if (isError) {
+    if (redirect_idx + 1 >= args.size()) {
+      std::cerr << "No argument for redirect found" << std::endl;
+      return;
+    }
+    std::ofstream outputFile(args[redirect_idx + 1]);
+    std::cout << res;
+    outputFile << "";
+  } else {
     if (redirect_idx + 1 >= args.size()) {
       std::cerr << "No argument for redirect found" << std::endl;
       return;
@@ -95,7 +110,7 @@ void process_change_directory(std::vector<std::string>& args) {
 }
 
 void process_history(std::vector<std::string>& hist,
-                            std::vector<std::string>& args) {
+                     std::vector<std::string>& args) {
   if (args.size() > 1) {
     if (args[1] == "-r") {
       read_history_from_file(hist, args[2]);
