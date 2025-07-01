@@ -1,61 +1,35 @@
 #include "command_handler.h"
 
+#include "echo_redirection_handler.h"
 #include "history_handler.h"
 #include "utils.h"
 
 void process_echo(std::vector<std::string>& args) {
-  int redirect_idx = args.size();
-  bool isError = false;
-  bool isAppend = false;
+  bool no_redirect_append = true;
   for (int i = 0; i < (int)args.size(); i++) {
     if (args[i] == ">" || args[i] == "1>") {
-      redirect_idx = i;
+      no_redirect_append = false;
+      redirect_echo_stdout(args, i);
       break;
     }
     if (args[i] == "2>") {
-      redirect_idx = i;
-      isError = true;
+      no_redirect_append = false;
+      redirect_echo_stderr(args, i);
       break;
     }
-    if (args[i] == "1>>") {
-      redirect_idx = i;
-      isAppend = true;
+    if (args[i] == ">>" || args[i] == "1>>") {
+      no_redirect_append = false;
+      append_echo_stdout(args, i);
+      break;
+    }
+    if (args[i] == "2>>") {
+      no_redirect_append = false;
+      append_echo_stderr(args, i);
       break;
     }
   }
-  std::string res = "";
-  for (int i = 1; i < redirect_idx; i++) {
-    res += args[i];
-    if (i == redirect_idx - 1)
-      res += "\n";
-    else
-      res += " ";
-  }
-
-  if (redirect_idx == (int)args.size())
-    std::cout << res;
-  else if (isError) {
-    if (redirect_idx + 1 >= args.size()) {
-      std::cerr << "No argument for redirect found" << std::endl;
-      return;
-    }
-    std::ofstream outputFile(args[redirect_idx + 1]);
-    std::cout << res;
-    outputFile << "";
-  } else if (isAppend) {
-    if (redirect_idx + 1 >= args.size()) {
-      std::cerr << "No argument for redirect found" << std::endl;
-      return;
-    }
-    std::ofstream outputFile(args[redirect_idx + 1], std::ios::app);
-    outputFile << res;
-  } else {
-    if (redirect_idx + 1 >= args.size()) {
-      std::cerr << "No argument for redirect found" << std::endl;
-      return;
-    }
-    std::ofstream outputFile(args[redirect_idx + 1]);
-    outputFile << res;
+  if (no_redirect_append) {
+    std::cout << find_output(args, (int)args.size());
   }
 }
 
