@@ -4,15 +4,31 @@
 #include "utils.h"
 
 void process_echo(std::vector<std::string>& args) {
+  int redirect_idx = args.size();
+  for (int i = 0; i < (int)args.size(); i++) {
+    if (args[i].find('>') != std::string::npos) {
+      redirect_idx = i;
+      break;
+    }
+  }
   std::string res = "";
-  for (int i = 1; i < (int)args.size(); i++) {
+  for (int i = 1; i < redirect_idx; i++) {
     res += args[i];
-    if (i == (int)args.size() - 1)
+    if (i == redirect_idx - 1)
       res += "\n";
     else
       res += " ";
   }
-  std::cout << res;
+  if (redirect_idx == (int)args.size())
+    std::cout << res;
+  else {
+    if (redirect_idx + 1 >= args.size()) {
+      std::cerr << "No argument for redirect found" << std::endl;
+      return;
+    }
+    std::ofstream outputFile(args[redirect_idx + 1]);
+    outputFile << res;
+  }
 }
 
 void process_type(std::vector<std::string>& paths,
