@@ -54,6 +54,49 @@ void process_command(std::vector<std::string>& args,
   std::cout << input << ": command not found" << std::endl;
 }
 
+void process_pipeline(std::vector<std::vector<std::string>>& splitted_args,
+                      std::vector<std::string>& paths,
+                      std::vector<std::string>& hist, std::string& input,
+                      int idx) {
+  int pipefd[2];
+  pid_t pid1, pid2;
+  if (pipe(pipefd) == -1) {
+    perror("pipe");
+    return;
+  }
+  if ((pid1 = fork()) == 0) {
+    bool exited = false;
+    dup2(pipefd[1],
+         STDOUT_FILENO);  // redirect stdout to write into the pipe
+    close(pipefd[0]);     // close ununsed end to avoid deadlocks, hangs, and
+                          // file descriptor leaks
+    close(pipefd[1]);
+    process_command(splitted_args[idx - 1], paths, hist, input, exited);
+    exit(1);  // command processing is done, so exit from the fork and back
+              // to parent, i.e., main()
+  }
+  if ((pid2 = fork()) == 0) {
+    bool exited = false;
+    dup2(pipefd[0], STDIN_FILENO);
+    close(pipefd[0]);
+    close(pipefd[1]);
+    if (idx < (int)splitted_args.size() - 1) {
+      process_pipeline(splitted_args, paths, hist, input, idx + 1);
+    } else {
+      process_command(splitted_args[idx], paths, hist, input, exited);
+    }
+    exit(1);
+  }
+
+  // Close both ends of pipe
+  close(pipefd[0]);
+  close(pipefd[1]);
+
+  // Wait for both processes to complete
+  waitpid(pid1, nullptr, 0);
+  waitpid(pid2, nullptr, 0);
+}
+
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -93,51 +136,15 @@ int main() {
     raw_args.push_back("|");
 
     auto splitted_args = split_arguments_for_pipeline(raw_args, "|");
-    bool exited = false;
 
     if (splitted_args.size() == 1) {
-      for (auto args : splitted_args) {
-        process_command(args, paths, hist, input, exited);
-      }
+      bool exited = false;
+      process_command(splitted_args[0], paths, hist, input, exited);
       if (exited) break;
       continue;
     }
 
-    for (int i = 1; i < (int)splitted_args.size(); i++) {
-      int pipefd[2];
-      pid_t pid1, pid2;
-      if (pipe(pipefd) == -1) {
-        perror("pipe");
-        break;
-      }
-      if ((pid1 = fork()) == 0) {
-        bool exited = false;
-        close(pipefd[0]);  // close ununsed end to avoid deadlocks, hangs, and
-                           // file descriptor leaks
-        dup2(pipefd[1],
-             STDOUT_FILENO);  // redirect stdout to write into the pipe
-        close(pipefd[1]);
-        process_command(splitted_args[i - 1], paths, hist, input, exited);
-        exit(1);  // command processing is done, so exit from the fork and back
-                  // to parent, i.e., main()
-      }
-      if ((pid2 = fork()) == 0) {
-        bool exited = false;
-        close(pipefd[1]);
-        dup2(pipefd[0], STDIN_FILENO);
-        close(pipefd[0]);
-        process_command(splitted_args[i], paths, hist, input, exited);
-        exit(1);
-      }
-
-      // Close both ends of pipe
-      close(pipefd[0]);
-      close(pipefd[1]);
-
-      // Wait for both processes to complete
-      waitpid(pid1, nullptr, 0);
-      waitpid(pid2, nullptr, 0);
-    }
+    process_pipeline(splitted_args, paths, hist, input, 1);
   }
 
   if (hist_path) write_history_to_file(hist, hist_path);
