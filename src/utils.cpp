@@ -149,9 +149,11 @@ std::string find_entries_from_paths(std::vector<std::string>& paths,
     std::string full_path = path + "/" + command;
     try {
       for (const auto& entry : std::filesystem::directory_iterator(path)) {
-        if (entry.path() == full_path) { 
-            // This if statement just check whether the full_path exists or not, this does not check whether full_path is executable or not
-            // To check whether the function is executables, use the find_executables_from_paths function
+        if (entry.path() == full_path) {
+          // This if statement just check whether the full_path exists or not,
+          // this does not check whether full_path is executable or not To check
+          // whether the function is executables, use the
+          // find_executables_from_paths function
           return full_path;
         }
       }
@@ -171,4 +173,19 @@ std::string find_executables_from_paths(std::vector<std::string>& paths,
     }
   }
   return "";
+}
+
+std::vector<std::vector<std::string>> split_arguments_for_pipeline(
+    std::vector<std::string>& args, std::string delimiter) {
+  std::vector<std::vector<std::string>> res;
+  std::vector<std::string> cur;
+  for (int i = 0; i < (int)args.size(); i++) {
+    if (args[i] == delimiter) {
+      res.push_back(cur);
+      cur.clear();
+      continue;
+    }
+    cur.push_back(args[i]);
+  }
+  return res;
 }
